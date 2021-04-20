@@ -10,66 +10,8 @@ public class Rendu3D
     private static final Logger log = new Logger();
     private static final int CAMERA = -999;
 
-    public static void main(String[] args) throws Exception
-    {
-        String fichierSortie = "sortie.png";
-        long start = System.currentTimeMillis();
-        Scene scene = new Scene();
-        draw(fichierSortie, scene);
-        long end = System.currentTimeMillis();
-        log.log(" Sur: "+ (end-start)/1000+" Seconds");
-    }
-
     // la fonction principale L'algo
-    private static void draw(String fichierSortie, Scene scene) throws IOException
-    {
-        FileOutputStream f = ecrire_image(fichierSortie,scene);
-        int padding = (4 - scene.largeur * 3 % 4) % 4;
-        int heightImage = (scene.largeur * 3 + padding) * scene.hauteur;
-        int size = 60 + heightImage;
 
-        log.log("Algorithme en cours ...");
-
-        // Envoyer un rayon d'apres chaque pixel de la camera et calculer la couleur
-        for (int y = 0; y < scene.hauteur; y++) {
-            for (int x = 0; x < scene.largeur; x++) {
-
-                // We start with a black pixel and add colors to this
-                // pixel as find rays that determine the color of this
-                // pixel.
-                Couleur couleurFinale = new Couleur(0, 0, 0);
-
-                // Antialiasing by 4x supersampling.
-                for (double fx = x; fx < x + 1; fx += 0.5) {
-                    for (double fy = y; fy < y + 1; fy += 0.5) {
-
-
-                        double pourcentage = 0.25;// chaque couleur contribue par 1/4 dans la couleur finale
-                        Rayon rayonvue = new Rayon(new Point(fx, fy, CAMERA),new Vecteur(0, 0, 1));
-                        Couleur couleur = couleur_sur_camera(rayonvue, scene);
-                        couleur.exposure(1.0);
-                        couleurFinale.ajouter_couleur(Couleur.multiplier_couleurs(pourcentage, couleur));
-                    }
-                }
-
-                // Gamma correction
-                couleurFinale.correction_gamma();
-                // Ecrire les bytes d'un pixels sur l'image
-                f.write(couleurFinale.convertBytes());// write n'accepte que des bytes
-            }
-            // Pour tout pixel sur l'image rembourrer le par des 0, multiple de 4.
-            for (int i = 0; i < padding; i++) {
-                f.write(0);
-            }
-
-        }
-
-        log.log("Algorithme terminé. ");
-        log.log(nbpixelsTouche+" pixels touchés");
-        log.log(nbpixelsNonTouche+" pixels non touchés");
-        f.close();
-        log.log("Au revoir, vérifiez " + fichierSortie + "!");
-    }
 
     public static FileOutputStream ecrire_image(String nom,Scene scene) throws IOException {
         FileOutputStream image = new FileOutputStream(nom);
@@ -211,6 +153,49 @@ public class Rendu3D
             this.intersecte = intersecte;
         }
     }
+
+    private static void image_finale(String fichierSortie, Scene scene) throws IOException
+    {
+        FileOutputStream f = ecrire_image(fichierSortie,scene);
+        int padding = (4 - scene.largeur * 3 % 4) % 4;
+        log.log("Algorithme en cours ...");
+
+        // Envoyer un rayon d'apres chaque pixel de la camera et calculer la couleur
+        for (int y = 0; y < scene.hauteur; y++) {
+            for (int x = 0; x < scene.largeur; x++) {
+
+                // commencer par un pixel noir, ajouter les couleurs en determinant les rayon qui traversent ce pixel
+                Couleur couleurFinale = new Couleur(0, 0, 0);
+                for (double dx = x; dx < x + 1; dx += 0.5) {
+                    for (double dy = y; dy < y + 1; dy += 0.5) {
+
+
+                        double pourcentage = 0.25;// chaque couleur contribue par 1/4 dans la couleur finale
+                        Rayon rayonvue = new Rayon(new Point(dx, dy, CAMERA),new Vecteur(0, 0, 1));
+                        Couleur couleur = couleur_sur_camera(rayonvue, scene);
+                        couleur.exposure(1.0);
+                        couleurFinale.ajouter_couleur(Couleur.multiplier_couleurs(pourcentage, couleur));
+                    }
+                }
+
+                // Gamma correction
+                couleurFinale.correction_gamma();
+                // Ecrire les bytes d'un pixels sur l'image
+                f.write(couleurFinale.convertBytes());// write n'accepte que des bytes
+            }
+            // Pour tout pixel sur l'image rembourrer le par des 0, multiple de 4.
+            for (int i = 0; i < padding; i++) {
+                f.write(0);
+            }
+
+        }
+
+        log.log("Algorithme terminé. ");
+        log.log(nbpixelsTouche+" pixels touchés");
+        log.log(nbpixelsNonTouche+" pixels non touchés");
+        f.close();
+        log.log("Au revoir, vérifiez " + fichierSortie + "!");
+    }
 //est ce que le rayon intersecte l'objet, est ce que la distance entrer ce point d'inter et l'origine du rayon est moins que cette distance
     // Obligation
     private static Intersection toucheObjet(Rayon rayon, Scene.Sphere sphere,
@@ -238,5 +223,13 @@ public class Rendu3D
 
         return new Intersection(distance, false);
     }
-
+    public static void main(String[] args) throws Exception
+    {
+        String fichierSortie = "sortie.bmp";
+        long start = System.currentTimeMillis();
+        Scene scene = new Scene();
+        image_finale(fichierSortie, scene);
+        long end = System.currentTimeMillis();
+        log.log(" Sur: "+ (end-start)/1000+" Seconds");
+    }
 }

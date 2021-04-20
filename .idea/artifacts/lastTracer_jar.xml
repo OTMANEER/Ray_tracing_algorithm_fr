@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="lastTracer:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/lastTracer_jar</output-path>
+    <root id="archive" name="lastTracer.jar">
+      <element id="module-output" name="lastTracer" />
+    </root>
+  </artifact>
+</component>

@@ -186,13 +186,4 @@ public class Reader {
         return paires;
     }
 
-    public static void main(String[] args) throws Exception {
-        Reader r = new Reader("test.txt");
-        ArrayList<String> strings = r.lireElement();
-        ArrayList<Paire> arrayList= r.builTokens();
-        for (Paire p:arrayList){
-            System.out.print(p);
-            System.out.println(" "+p.getRayon());
-        }
-}
 }
