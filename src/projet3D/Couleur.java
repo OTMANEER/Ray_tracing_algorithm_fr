@@ -1,21 +1,3 @@
-/* 
- * Couleur class.
- * Copyright (C) 2009 Susam Pal
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
-
 package projet3D;
 
 public class Couleur
@@ -36,14 +18,12 @@ public class Couleur
         green += couleur.green;
         blue += couleur.blue;
     }
-
-
+    // La quantité de la lumière qui traverse la camera
     public void exposure(double exposure) {
         blue = 1.0 - Math.exp(-blue * exposure);
         red = 1.0 - Math.exp(-red * exposure);
         green = 1.0 - Math.exp(-green * exposure);
     }
-
     /**
      *Correction Gamma
      * encodage sRGB

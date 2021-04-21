@@ -1,22 +1,18 @@
 package projet3D;
-
-import java.io.FileOutputStream;
-import java.io.IOException;
-
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
 public class Rendu3D
 {
     static int nbpixelsTouche=0;
     static int nbpixelsNonTouche=0;
     private static final Logger log = new Logger();
-    private static final int CAMERA = -999;
-
-    // la fonction principale L'algo
-
-
+    private static final int CAMERA=-1000; // Camera sur dz
+// écrire l'image=> espace de tournage.
     public static FileOutputStream ecrire_image(String nom,Scene scene) throws IOException {
         FileOutputStream image = new FileOutputStream(nom);
         int padding = (4 - scene.largeur * 3 % 4) % 4;
-
         int heightImage = (scene.largeur * 3 + padding) * scene.hauteur;
         int size = 54 + heightImage;
         image.write(new byte[] {'B', 'M'});
@@ -89,11 +85,9 @@ public class Rendu3D
                 //entre les deux vecteurs, Ou bien confondu avec une des deux
                 if (projectionLumiere <= 0.0)
                     continue;
-
                 double distanceLumiere = rayonLumineux.direction.norme();
                 rayonLumineux.direction.normaliser();
                 projectionLumiere /= distanceLumiere;
-
                 boolean surOmbre = false;
                 for (Scene.Sphere s : scene.lesSpheres) {
                     Intersection inter = toucheObjet(rayonLumineux, s, distanceLumiere);
@@ -102,20 +96,16 @@ public class Rendu3D
                         break;
                     }
                 }
-
                 if (!surOmbre)
                 {
                     // coeffecient de Lambert
                     double lambert = Vecteur.produit_scalaire(rayonLumineux.direction, vectNormale) * coefficient;
-
                     outputCouleur.ajouter_couleur(Couleur.multiplier_couleurs(lambert, Couleur.multiplier_couleurs(
                         lumiere.couleur_light, currentMaterielPrincipale.diffusion)));
-
                     // Ombrage de Phong
                     Vecteur v = Vecteur.soustraire(rayonLumineux.direction, rayon.direction);
                     double norm = v.norme();
                     if (norm != 0.0) {
-
                         double projectionVisible =
                                 Vecteur.produit_scalaire(rayon.direction, vectNormale);
                         double phongOmbrage =Math.max(projectionLumiere - projectionVisible, 0.0)/ norm;
@@ -132,7 +122,7 @@ public class Rendu3D
             // R1 incident, R2 le vecteur normale alorsle rayon reflechi et R1-2*D.R2*R2
             Vecteur projectionAlongNormal = Vecteur.produit_valeur(
                     Vecteur.produit_scalaire(rayon.direction, vectNormale), vectNormale);
-            //Le rayon refléchi
+            //Le rayon réfléchis
             rayon.origine = pointIntersection;
             rayon.direction = Vecteur.soustraire(rayon.direction,Vecteur.produit_valeur(2, projectionAlongNormal));
             zIndex++;
@@ -154,22 +144,18 @@ public class Rendu3D
         }
     }
 
-    private static void image_finale(String fichierSortie, Scene scene) throws IOException
+    private static String image_finale(String fichierSortie, Scene scene) throws IOException
     {
         FileOutputStream f = ecrire_image(fichierSortie,scene);
-        int padding = (4 - scene.largeur * 3 % 4) % 4;
+        int curve = (4 - scene.largeur * 3 % 4) % 4;
         log.log("Algorithme en cours ...");
-
         // Envoyer un rayon d'apres chaque pixel de la camera et calculer la couleur
         for (int y = 0; y < scene.hauteur; y++) {
             for (int x = 0; x < scene.largeur; x++) {
-
                 // commencer par un pixel noir, ajouter les couleurs en determinant les rayon qui traversent ce pixel
                 Couleur couleurFinale = new Couleur(0, 0, 0);
                 for (double dx = x; dx < x + 1; dx += 0.5) {
                     for (double dy = y; dy < y + 1; dy += 0.5) {
-
-
                         double pourcentage = 0.25;// chaque couleur contribue par 1/4 dans la couleur finale
                         Rayon rayonvue = new Rayon(new Point(dx, dy, CAMERA),new Vecteur(0, 0, 1));
                         Couleur couleur = couleur_sur_camera(rayonvue, scene);
@@ -177,24 +163,23 @@ public class Rendu3D
                         couleurFinale.ajouter_couleur(Couleur.multiplier_couleurs(pourcentage, couleur));
                     }
                 }
-
                 // Gamma correction
                 couleurFinale.correction_gamma();
                 // Ecrire les bytes d'un pixels sur l'image
                 f.write(couleurFinale.convertBytes());// write n'accepte que des bytes
             }
             // Pour tout pixel sur l'image rembourrer le par des 0, multiple de 4.
-            for (int i = 0; i < padding; i++) {
+            for (int i = 0; i < curve; i++) {
                 f.write(0);
             }
-
         }
 
-        log.log("Algorithme terminé. ");
-        log.log(nbpixelsTouche+" pixels touchés");
-        log.log(nbpixelsNonTouche+" pixels non touchés");
-        f.close();
-        log.log("Au revoir, vérifiez " + fichierSortie + "!");
+            log.log("Algorithme terminé. ");
+            log.log(nbpixelsTouche+" pixels touchés");
+            log.log(nbpixelsNonTouche+" pixels non touchés");
+            f.close();
+            log.log("Au revoir, vérifiez " + fichierSortie + "!");
+        return fichierSortie;
     }
 //est ce que le rayon intersecte l'objet, est ce que la distance entrer ce point d'inter et l'origine du rayon est moins que cette distance
     // Obligation
@@ -202,25 +187,19 @@ public class Rendu3D
                                             double distance)
     {
         Vecteur d = new Vecteur(rayon.origine, sphere.point);
-
         double a = Vecteur.produit_scalaire(rayon.direction, d);
-
         double teta = a * a - Vecteur.produit_scalaire(d, d)+sphere.rayon * sphere.rayon;
-
         if (teta < 0.0) {
             return new Intersection(distance, false); // Pas d'intersection
         }
         double debut = a - Math.sqrt(teta);
         double fin = a + Math.sqrt(teta);
-
-        if (debut > 0.11 && debut < distance) {
+        if (debut > 0.12 && debut < distance) {
             return new Intersection(debut, true);
         }
-
-        if (fin > 0.11 && fin < distance) {
+        if (fin > 0.12 && fin < distance) {
             return new Intersection(fin, true);
         }
-
         return new Intersection(distance, false);
     }
     public static void main(String[] args) throws Exception
@@ -228,8 +207,23 @@ public class Rendu3D
         String fichierSortie = "sortie.bmp";
         long start = System.currentTimeMillis();
         Scene scene = new Scene();
-        image_finale(fichierSortie, scene);
+        String im = image_finale(fichierSortie, scene);
         long end = System.currentTimeMillis();
-        log.log(" Sur: "+ (end-start)/1000+" Seconds");
+        log.log("In: "+ (end-start)/1000+" Seconds");
+         BufferedImage image = ImageIO.read(new File(im));
+        //ByteArrayOutputStream output = new ByteArrayOutputStream();
+        JPanel panel = new JPanel();
+        JLabel label = new JLabel(new ImageIcon(image));
+        panel.add(label);
+        // fenetre principale
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        JFrame frame = new JFrame("Resultat final");
+        frame.setResizable(false);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // Ajouter le panel à la fenetre principale
+        frame.add(panel);
+
+        frame.pack();
+        frame.setVisible(true);
     }
 }

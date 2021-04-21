@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Rendu3dProjet:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Rendu3dProjet_jar</output-path>
+    <root id="archive" name="Rendu3dProjet.jar">
+      <element id="module-output" name="Rendu3dProjet" />
+    </root>
+  </artifact>
+</component>

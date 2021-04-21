@@ -1,7 +1,6 @@
 package projet3D;
 
-public class Rayon
-{
+public class Rayon {
     public Point origine;
     public Vecteur direction;
 
